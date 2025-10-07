@@ -1,67 +1,55 @@
-# Python プロジェクトのテンプレートリポジトリ
+# ollama-rag-sample
 
-このリポジトリは Python の開発プロジェクトで使用するテンプレートリポジトリです。  
-想定している開発環境は
+Ollama の生成 AI モデルで RAG を試す
 
-- Visual Studio Code
-- Python 3.13 (ライブラリは Pipenv で管理)
-  - formatter は拡張機能の[autopep8](https://marketplace.visualstudio.com/items?itemName=ms-python.autopep8)を使用
-  - linter は拡張機能の[Flake8](https://marketplace.visualstudio.com/items?itemName=ms-python.flake8)を使用
+# 実行方法
 
-となります。
-
-# セットアップ手順
-
-このテンプレートを使用して Python のソースコードを初めて実行するまでの手順は以下の通りです。
-
-1. テンプレートからリポジトリを作成する
-
-2. 作成したリポジトリをローカル PC にクローンする
+Docker でコンテナを起動する。
 
 ```bash
-git clone {作成したリポジトリのURL}
-cd {作成したリポジトリのフォルダ名}
+docker compose up -d
 ```
 
-3. `pipenv`を pip インストールする (インストール済みの場合は不要)
-
-\*`pipenv`自体はグローバルにインストールしますが、  
-この Python プロジェクトで使用する依存ライブラリの管理は`pipenv`によってリポジトリ内のフォルダ上に保存されていきます。
+Ollama のコンテナに入り、モデルをダウンロードする。
 
 ```bash
-pip install pipenv
+# コンテナにログイン
+docker compose exec ollama bash
+
+# モデルをダウンロード
+ollama pull gemma3:4b
+ollama pull embeddinggemma:300m
+
+# コンテナからログアウト
+exit
 ```
 
-4. `setup.sh`のシェルスクリプトを実行する
-
-- 例: `bash`で実行する場合
+テキスト生成の API を呼び出す。
 
 ```bash
-bash setup.sh
+curl -X POST http://localhost:11434/api/generate -d '{"model": "gemma3:4b", "prompt": "地球の地軸はなぜ傾いているの？", "stream": false}'
 ```
 
-5. pipenv から`main.py`を実行する
+テキストの埋め込み API を呼び出す。
 
 ```bash
-pipenv run main
+curl -X POST http://localhost:11434/api/embed -d '{"model": "embeddinggemma:300m", "input": "なぜ空は青いの？"}'
 ```
 
-`main.py`を実行後、以下のようなメッセージが表示されれば成功 👍 です。
+# 終了方法
 
+```bash
+docker compose down --volumes --remove-orphans
 ```
-Success to create python project from template, Nice Job!!
 
-Now, this project has below file/directory in root.
-====================================================
-setup.sh
-.editorconfig
-README.md
-Pipfile
-.gitignore
-.venv
-.git
-.vscode
-main.py
-Pipfile.lock
-====================================================
+モデルファイルが数 GB になるので、ストレージ圧迫を気にするなら`.ollama`フォルダも削除しておく。
+
+```bash
+rm -r ./.ollama
 ```
+
+# 参考
+
+- [Ollama | GitHub](https://github.com/ollama/ollama)
+- [Ollama REST API](https://github.com/ollama/ollama/blob/main/docs/api.md)
+- [Ollama Library](https://ollama.com)
